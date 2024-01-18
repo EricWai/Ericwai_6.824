@@ -90,7 +90,11 @@ type rfState int
 type VoteState int
 type AppendEntriesState int
 
-var HeartBeatsTimeout = 35 * time.Millisecond
+var (
+	HeartBeatsTimeout = 20 * time.Millisecond
+	ElectTimeoutMin   = 50
+	ElectTimeoutMax   = 100
+)
 
 const (
 	Normal VoteState = iota
@@ -144,6 +148,12 @@ type Raft struct {
 	lastIncludeTerm  int
 	// Look at the paper's Figure 2 for a description of what
 	// state a Raft server must maintain.
+}
+
+func (rf *Raft) GetRaftStateSize() int {
+	//rf.mu.Lock()
+	//defer rf.mu.Unlock()
+	return len(rf.persister.ReadRaftState())
 }
 
 func (rf *Raft) getLastIndex() int {
@@ -744,10 +754,10 @@ func (rf *Raft) ticker() {
 func (rf *Raft) resetTicker() {
 	switch rf.state {
 	case Follower:
-		rf.overTime = time.Duration(100+rand.Intn(100)) * time.Millisecond
+		rf.overTime = time.Duration(ElectTimeoutMin+rand.Intn(ElectTimeoutMax-ElectTimeoutMin)) * time.Millisecond
 		rf.tkr.Reset(rf.overTime)
 	case Candidate:
-		rf.overTime = time.Duration(100+rand.Intn(100)) * time.Millisecond
+		rf.overTime = time.Duration(ElectTimeoutMin+rand.Intn(ElectTimeoutMax-ElectTimeoutMin)) * time.Millisecond
 		rf.tkr.Reset(rf.overTime)
 	case Leader:
 		rf.overTime = HeartBeatsTimeout
@@ -852,7 +862,7 @@ func Make(peers []*labrpc.ClientEnd, me int,
 	rf.matchIndex = make([]int, len(rf.peers))
 
 	rf.state = Follower
-	rf.overTime = time.Duration(150+rand.Intn(150)) * time.Millisecond
+	rf.overTime = time.Duration(ElectTimeoutMin+rand.Intn(ElectTimeoutMax-ElectTimeoutMin)) * time.Millisecond
 	rf.tkr = time.NewTicker(rf.overTime)
 
 	// initialize from state persisted before a crash
