@@ -91,7 +91,7 @@ type VoteState int
 type AppendEntriesState int
 
 var (
-	HeartBeatsTimeout = 20 * time.Millisecond
+	HeartBeatsTimeout = 25 * time.Millisecond
 	ElectTimeoutMin   = 50
 	ElectTimeoutMax   = 100
 )
@@ -151,9 +151,9 @@ type Raft struct {
 }
 
 func (rf *Raft) GetRaftStateSize() int {
-	//rf.mu.Lock()
-	//defer rf.mu.Unlock()
-	return len(rf.persister.ReadRaftState())
+	rf.mu.Lock()
+	defer rf.mu.Unlock()
+	return len(rf.persister.raftstate)
 }
 
 func (rf *Raft) getLastIndex() int {
@@ -544,7 +544,9 @@ func (rf *Raft) sendAppendEntry(server int, args *AppendEntriesArgs, reply *Appe
 			}
 
 			//for rf.commitIndex < len(rf.log) {
+			flag := false
 			for rf.commitIndex < args.PrevLogIndex+len(args.Entries) {
+				flag = true
 				rf.commitIndex++
 				//fmt.Printf("Term [%v]: %v commit %v\n", rf.currentTerm, rf.me, rf.commitIndex)
 				applyMsg := ApplyMsg{
@@ -557,6 +559,9 @@ func (rf *Raft) sendAppendEntry(server int, args *AppendEntriesArgs, reply *Appe
 				rf.mu.Lock()
 				rf.lastApplied = rf.commitIndex
 				//fmt.Printf("Term [%v]: %v applied %v\n", rf.currentTerm, rf.me, rf.lastApplied)
+			}
+			if flag {
+				rf.startHeartBeats()
 			}
 		}
 		return

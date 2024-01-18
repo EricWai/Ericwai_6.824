@@ -64,12 +64,14 @@ func (kv *KVServer) getWaitCh(index int) chan Op {
 func (kv *KVServer) Get(args *GetArgs, reply *GetReply) {
 	// Your code here.
 	if kv.killed() {
+		//fmt.Printf("[ ----Server[%v]----] : is killed\n", kv.me)
 		reply.Err = ErrWrongLeader
 		return
 	}
 
 	_, isLeader := kv.rf.GetState()
 	if !isLeader {
+		//fmt.Printf("[ ----Server[%v]----] : is not leader\n", kv.me)
 		reply.Err = ErrWrongLeader
 		return
 	}
@@ -222,13 +224,14 @@ func (kv *KVServer) applyMsgHandlerLoop() {
 		}
 		select {
 		case msg := <-kv.applyCh:
+			//fmt.Printf("[ ~~~~applyMsgHandlerLoop~~~~ ]: %+v\n", msg)
 			if msg.CommandValid {
 				if msg.CommandIndex <= kv.lastIncludeIndex {
 					return
 				}
 				index := msg.CommandIndex
 				op := msg.Command.(Op)
-				//fmt.Printf("[ ~~~~applyMsgHandlerLoop~~~~ ]: %+v\n", msg)
+				op.Index = index
 				if !kv.ifDuplicate(op.ClientId, op.SeqId) {
 					kv.mu.Lock()
 					switch op.Optype {
@@ -240,6 +243,7 @@ func (kv *KVServer) applyMsgHandlerLoop() {
 					kv.seqMap[op.ClientId] = op.SeqId
 					kv.mu.Unlock()
 				}
+
 				if kv.maxraftstate != -1 && kv.rf.GetRaftStateSize() > kv.maxraftstate {
 					snapshot := kv.PersistSnapShot()
 					kv.rf.Snapshot(msg.CommandIndex, snapshot)

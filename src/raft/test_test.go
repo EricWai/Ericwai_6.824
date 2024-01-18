@@ -61,22 +61,22 @@ func TestReElection2A(t *testing.T) {
 
 	// if the leader disconnects, a new one should be elected.
 	cfg.disconnect(leader1)
-	fmt.Printf("%d dead\n", leader1)
+	//fmt.Printf("%d dead\n", leader1)
 	cfg.checkOneLeader()
 
 	// if the old leader rejoins, that shouldn't
 	// disturb the new leader. and the old leader
 	// should switch to follower.
 	cfg.connect(leader1)
-	fmt.Printf("%d connect\n", leader1)
+	//fmt.Printf("%d connect\n", leader1)
 	leader2 := cfg.checkOneLeader()
 
 	// if there's no quorum, no new leader should
 	// be elected.
 	cfg.disconnect(leader2)
-	fmt.Printf("%d dead\n", leader2)
+	//fmt.Printf("%d dead\n", leader2)
 	cfg.disconnect((leader2 + 1) % servers)
-	fmt.Printf("%d dead\n", (leader2+1)%servers)
+	//fmt.Printf("%d dead\n", (leader2+1)%servers)
 	time.Sleep(2 * RaftElectionTimeout)
 
 	// check that the one connected server
@@ -85,12 +85,12 @@ func TestReElection2A(t *testing.T) {
 
 	// if a quorum arises, it should elect a leader.
 	cfg.connect((leader2 + 1) % servers)
-	fmt.Printf("%d connect\n", (leader2+1)%servers)
+	//fmt.Printf("%d connect\n", (leader2+1)%servers)
 	cfg.checkOneLeader()
 
 	// re-join of last node shouldn't prevent leader from existing.
 	cfg.connect(leader2)
-	fmt.Printf("%d connect\n", leader2)
+	//fmt.Printf("%d connect\n", leader2)
 	cfg.checkOneLeader()
 
 	cfg.end()
@@ -114,7 +114,7 @@ func TestManyElections2A(t *testing.T) {
 		cfg.disconnect(i1)
 		cfg.disconnect(i2)
 		cfg.disconnect(i3)
-		fmt.Printf("%d,%d,%d dead\n", i1, i2, i3)
+		//fmt.Printf("%d,%d,%d dead\n", i1, i2, i3)
 
 		// either the current leader should still be alive,
 		// or the remaining four should elect a new one.
@@ -123,7 +123,7 @@ func TestManyElections2A(t *testing.T) {
 		cfg.connect(i1)
 		cfg.connect(i2)
 		cfg.connect(i3)
-		fmt.Printf("%d,%d,%d connect\n", i1, i2, i3)
+		//fmt.Printf("%d,%d,%d connect\n", i1, i2, i3)
 	}
 
 	cfg.checkOneLeader()
@@ -742,7 +742,7 @@ func TestPersist22C(t *testing.T) {
 
 		cfg.disconnect((leader1 + 1) % servers)
 		cfg.disconnect((leader1 + 2) % servers)
-		fmt.Println((leader1+1)%servers, (leader1+2)%servers, "disconnect")
+		//fmt.Println((leader1+1)%servers, (leader1+2)%servers, "disconnect")
 
 		//12
 		cfg.one(10+index, servers-2, true)
@@ -751,25 +751,25 @@ func TestPersist22C(t *testing.T) {
 		cfg.disconnect((leader1 + 0) % servers)
 		cfg.disconnect((leader1 + 3) % servers)
 		cfg.disconnect((leader1 + 4) % servers)
-		fmt.Println((leader1+0)%servers, (leader1+3)%servers, (leader1+4)%servers, "disconnect")
+		//fmt.Println((leader1+0)%servers, (leader1+3)%servers, (leader1+4)%servers, "disconnect")
 
 		cfg.start1((leader1+1)%servers, cfg.applier)
 		cfg.start1((leader1+2)%servers, cfg.applier)
 		cfg.connect((leader1 + 1) % servers)
 		cfg.connect((leader1 + 2) % servers)
-		fmt.Println((leader1+1)%servers, (leader1+2)%servers, "connect")
+		//fmt.Println((leader1+1)%servers, (leader1+2)%servers, "connect")
 
 		time.Sleep(RaftElectionTimeout)
 
 		cfg.start1((leader1+3)%servers, cfg.applier)
 		cfg.connect((leader1 + 3) % servers)
-		fmt.Println((leader1+3)%servers, "connect")
+		//fmt.Println((leader1+3)%servers, "connect")
 		//13
 		cfg.one(10+index, servers-2, true)
 		index++
 		cfg.connect((leader1 + 4) % servers)
 		cfg.connect((leader1 + 0) % servers)
-		fmt.Println((leader1+4)%servers, (leader1+0)%servers, "connect")
+		//fmt.Println((leader1+4)%servers, (leader1+0)%servers, "connect")
 	}
 
 	cfg.one(1000, servers, true)
@@ -846,6 +846,7 @@ func TestFigure82C(t *testing.T) {
 
 		if leader != -1 {
 			cfg.crash1(leader)
+			//fmt.Println(leader, "crash")
 			nup -= 1
 		}
 
@@ -854,6 +855,7 @@ func TestFigure82C(t *testing.T) {
 			if cfg.rafts[s] == nil {
 				cfg.start1(s, cfg.applier)
 				cfg.connect(s)
+				//fmt.Println(s, "connect")
 				nup += 1
 			}
 		}
@@ -919,7 +921,7 @@ func TestFigure8Unreliable2C(t *testing.T) {
 			_, _, ok := cfg.rafts[i].Start(rand.Int() % 10000)
 			//rand2
 			if ok && cfg.connected[i] {
-				fmt.Printf("Sucess a Start %v\n", i)
+				//fmt.Printf("Sucess a Start %v\n", i)
 				leader = i
 			}
 		}
@@ -934,7 +936,7 @@ func TestFigure8Unreliable2C(t *testing.T) {
 
 		if leader != -1 && (rand.Int()%1000) < int(RaftElectionTimeout/time.Millisecond)/2 {
 			cfg.disconnect(leader)
-			fmt.Printf("%v disconnect\n", leader)
+			//fmt.Printf("%v disconnect\n", leader)
 			nup -= 1
 		}
 
@@ -948,7 +950,7 @@ func TestFigure8Unreliable2C(t *testing.T) {
 			s := rand.Int() % servers
 			if cfg.connected[s] == false {
 				cfg.connect(s)
-				fmt.Printf("%v connect\n", s)
+				//fmt.Printf("%v connect\n", s)
 				nup += 1
 			}
 		}
